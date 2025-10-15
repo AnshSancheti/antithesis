@@ -1,0 +1,3 @@
+id,phrase_a_id,phrase_b_id,is_active,created_at
+1,1,2,true,2024-01-01T11:00:00Z
+2,3,4,false,2024-01-01T11:05:00Z

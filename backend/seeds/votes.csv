@@ -1,0 +1,5 @@
+id,phrase_pair_id,selected_phrase_id,session_id,created_at
+1,1,1,session-001,2024-01-01T11:10:00Z
+2,1,2,session-002,2024-01-01T11:11:00Z
+3,1,1,session-003,2024-01-01T11:12:00Z
+4,2,3,session-004,2024-01-01T11:20:00Z
