@@ -1,4 +1,4 @@
-# Antithesis Scaffold
+# Antithesis
 
 This repository contains a minimal TypeScript React frontend (Vite) and a Flask backend managed with `uv`. Both applications are wired together so the frontend fetches its greeting from the backend.
 
@@ -16,6 +16,7 @@ This repository contains a minimal TypeScript React frontend (Vite) and a Flask 
    ```bash
    cd frontend
    npm install
+   # optional: create .env.local and set VITE_API_BASE_URL for non-local backends
    npm run dev
    ```
    The dev server runs on [http://localhost:5173](http://localhost:5173).

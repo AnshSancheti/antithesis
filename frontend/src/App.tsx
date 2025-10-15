@@ -1,11 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './App.css';
+
+const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8000';
 
 function App() {
   const [message, setMessage] = useState('Loading backend message…');
 
+  const apiBaseUrl = useMemo(() => {
+    const envUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+    return envUrl && envUrl.length > 0 ? envUrl.replace(/\/$/, '') : DEFAULT_API_BASE_URL;
+  }, []);
+
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/hello')
+    fetch(`${apiBaseUrl}/api/hello`)
       .then(async (response) => {
         if (!response.ok) {
           throw new Error(`Request failed with status ${response.status}`);
@@ -14,9 +21,9 @@ function App() {
         setMessage(data.message);
       })
       .catch(() => {
-        setMessage('Backend unavailable. Is it running on port 8000?');
+        setMessage('Backend unavailable. Is it running?');
       });
-  }, []);
+  }, [apiBaseUrl]);
 
   return (
     <main className="app">

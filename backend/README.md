@@ -4,8 +4,9 @@ Simple Flask API that serves `Hello from Flask` and a health endpoint.
 
 ## Setup
 
-1. Create a local Python environment with uv (cache dir keeps everything inside the repo):
+1. Copy configuration and create a local Python environment with uv (cache dir keeps everything inside the repo):
    ```bash
+   cp .env.example .env  # edit if you need to allow more origins
    export UV_CACHE_DIR="$(pwd)/../.uv-cache"
    uv sync
    ```
