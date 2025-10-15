@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+
+# Python / backend
+.venv/
+__pycache__/
+*.py[cod]
+
+# uv cache
+.uv-cache/
+uv.lock
+
+# Env files
+.env
+.env.*
+
+# Logs
+*.log
