@@ -1,5 +1,5 @@
--- Migration: create core voting schema and materialized view cache
--- Requirements satisfied: phrases, phrase_pairs, votes tables, phrase_vote_counts materialized view
+-- Migration: create core voting schema
+-- Requirements satisfied: phrases, phrase_pairs, votes tables
 
 BEGIN;
 
@@ -49,45 +49,5 @@ CREATE TRIGGER trg_votes_enforce_phrase_membership
 BEFORE INSERT OR UPDATE ON votes
 FOR EACH ROW
 EXECUTE FUNCTION enforce_vote_phrase_membership();
-
--- Materialized view to cache aggregate vote counts per phrase
-DROP MATERIALIZED VIEW IF EXISTS phrase_vote_counts;
-CREATE MATERIALIZED VIEW phrase_vote_counts AS
-SELECT
-    p.id AS phrase_id,
-    COALESCE(COUNT(v.id), 0)::BIGINT AS total_votes,
-    CASE WHEN COUNT(v.id) > 0 THEN MIN(v.created_at) ELSE p.created_at END AS created_at,
-    CASE WHEN COUNT(v.id) > 0 THEN MAX(v.created_at) ELSE p.created_at END AS updated_at
-FROM phrases AS p
-LEFT JOIN votes AS v ON v.selected_phrase_id = p.id
-GROUP BY p.id, p.created_at;
-
-CREATE UNIQUE INDEX IF NOT EXISTS uq_phrase_vote_counts_phrase_id
-    ON phrase_vote_counts (phrase_id);
-
-CREATE OR REPLACE FUNCTION refresh_phrase_vote_counts()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- serialize refresh calls to avoid contention
-    PERFORM pg_advisory_xact_lock(871234);
-    REFRESH MATERIALIZED VIEW phrase_vote_counts;
-    RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_refresh_counts_on_votes ON votes;
-CREATE TRIGGER trg_refresh_counts_on_votes
-AFTER INSERT OR UPDATE OR DELETE ON votes
-FOR EACH STATEMENT
-EXECUTE FUNCTION refresh_phrase_vote_counts();
-
-DROP TRIGGER IF EXISTS trg_refresh_counts_on_phrases ON phrases;
-CREATE TRIGGER trg_refresh_counts_on_phrases
-AFTER INSERT OR UPDATE OR DELETE ON phrases
-FOR EACH STATEMENT
-EXECUTE FUNCTION refresh_phrase_vote_counts();
-
--- initial refresh to ensure freshly created view accurately reflects empty dataset
-REFRESH MATERIALIZED VIEW phrase_vote_counts;
 
 COMMIT;

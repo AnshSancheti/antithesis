@@ -13,7 +13,6 @@ PROJECT_ROOT = BASE_PATH.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert
 
 from app.database import SessionLocal
@@ -72,19 +71,12 @@ def seed_votes(session) -> int:
     result = session.execute(stmt)
     return result.rowcount or 0
 
-
-def refresh_materialized_view(session) -> None:
-    session.execute(text("REFRESH MATERIALIZED VIEW phrase_vote_counts"))
-
-
 def main() -> None:
     with SessionLocal() as session:
         with session.begin():
             inserted_phrases = seed_phrases(session)
             inserted_pairs = seed_phrase_pairs(session)
             inserted_votes = seed_votes(session)
-        with session.begin():
-            refresh_materialized_view(session)
     print(
         "Seed complete: %d phrases, %d phrase pairs, %d votes" % (
             inserted_phrases,

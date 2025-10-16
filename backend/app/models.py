@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -96,20 +96,3 @@ class Vote(Base):
                 self.id, self.phrase_pair_id, self.selected_phrase_id, self.session_id
             )
         )
-
-
-class PhraseVoteCount(Base):
-    """Materialized view projecting aggregate vote counts per phrase."""
-
-    __tablename__ = "phrase_vote_counts"
-    __table_args__ = {"info": {"materialized_view": True}}
-
-    phrase_id: Mapped[int] = mapped_column(primary_key=True)
-    total_votes: Mapped[int] = mapped_column(nullable=False)
-    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-
-    phrase: Mapped[Phrase] = relationship(viewonly=True, primaryjoin="PhraseVoteCount.phrase_id == Phrase.id")
-
-    def __repr__(self) -> str:  # pragma: no cover
-        return f"PhraseVoteCount(phrase_id={self.phrase_id!r}, total_votes={self.total_votes!r})"

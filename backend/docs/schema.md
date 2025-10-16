@@ -1,12 +1,12 @@
 # Phrase Voting Schema
 
 ## Overview
-The schema supports presenting two phrases, collecting votes, and reporting live tallies. It targets PostgreSQL (Fly.io managed or local) and optimises read performance via a materialised view.
+The schema supports presenting two phrases, collecting votes, and reporting live tallies. It targets PostgreSQL (Fly.io managed or local) and uses efficient on-demand aggregations to keep API responses fast without additional cache layers.
 
 ```
 phrases ─┬──── phrase_pairs ─── votes
-         │           │         │
-         └───────────┘         └── materialised view: phrase_vote_counts
+         │           │
+         └───────────┘
 ```
 
 ## Tables
@@ -14,19 +14,19 @@ phrases ─┬──── phrase_pairs ─── votes
 - **phrase_pairs**: Connects two distinct phrases, enforcing `phrase_a_id <> phrase_b_id` and uniqueness of the combination. `is_active` marks the pair currently shown to voters.
 - **votes**: Records one vote per session per pair with a unique constraint on (`phrase_pair_id`, `session_id`). A trigger validates that the selected phrase belongs to the pair.
 
-## Materialised View
-- **phrase_vote_counts**: Aggregates votes per phrase with total count plus first/most recent vote timestamps. It is refreshed automatically by triggers on `phrases` and `votes`, guaranteeing quick tally retrieval during high-traffic scenarios.
+## Aggregations
+- Totals per phrase are calculated on demand by aggregating the `votes` table. The `/api/quiz` endpoint performs this aggregation in a single query so the client receives fresh counts with minimal latency.
 
 ## Integrity & Concurrency
 - Foreign keys cascade deletes only where safe (`votes` cascade on pair removal) and restrict when data should persist (`phrases`).
 - Check and trigger-based validation prevent malformed data, preserving analytics accuracy even under concurrent voting.
-- Advisory locks serialise materialised view refreshes to avoid thrashing in high-concurrency contexts.
 
 ## Access Patterns
 - **Read phrases & pairs**: Query `phrase_pairs` joined to `phrases` for UI display.
-- **Cast vote**: Insert into `votes`; triggers enforce membership and refresh aggregates.
-- **Fetch tallies**: Select from `phrase_vote_counts`, joining back to `phrases` for text labels. Percentages can be derived on the fly: `total_votes / SUM(total_votes) OVER (PARTITION BY pair)`.
+- **Aggregate pairs**: Use `/api/quiz` to fetch all active pairs and current totals; the query aggregates votes on demand and returns a combined payload for the UI.
+- **Cast vote**: Insert into `votes`; triggers enforce membership and guarantee totals derived from `votes` remain accurate.
+- **Fetch tallies**: Any SQL client can run `SELECT selected_phrase_id, COUNT(*) FROM votes GROUP BY selected_phrase_id` to produce the same counts used by the API.
 
 ## Error Handling Notes
 - Violating the pair membership rule raises SQLSTATE `23514`; surface this as a 400-level error in the API.
-- Materialised view refresh failures roll back the transaction, ensuring callers receive a failure response rather than stale data.
+- Aggregation is part of the read query; transactional inserts ensure vote counts remain consistent. If a read fails, the caller receives an error rather than stale data.
