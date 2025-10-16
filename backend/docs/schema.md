@@ -24,7 +24,7 @@ phrases ─┬──── phrase_pairs ─── votes
 ## Access Patterns
 - **Read phrases & pairs**: Query `phrase_pairs` joined to `phrases` for UI display.
 - **Aggregate pairs**: Use `/api/quiz` to fetch all active pairs and current totals; the query aggregates votes on demand and returns a combined payload for the UI.
-- **Cast vote**: Insert into `votes`; triggers enforce membership and guarantee totals derived from `votes` remain accurate.
+- **Cast vote**: POST `/api/vote` inserts a row into `votes`; triggers enforce membership and the unique constraint prevents duplicate session votes.
 - **Fetch tallies**: Any SQL client can run `SELECT selected_phrase_id, COUNT(*) FROM votes GROUP BY selected_phrase_id` to produce the same counts used by the API.
 
 ## Error Handling Notes

@@ -28,7 +28,14 @@ Flask API paired with a PostgreSQL data store for the phrase voting application.
    uv run flask --app app:create_app --debug run --port 8000
    ```
 
-The API lives at `http://127.0.0.1:8000/api/hello`.
+The API lives at `http://127.0.0.1:8000`.
+
+## API Endpoints
+
+- `GET /api/hello` — simple liveness check.
+- `GET /api/health` — health endpoint.
+- `GET /api/quiz` — returns all active phrase pairs with their current vote totals.
+- `POST /api/vote` — body: `{ "phrasePairId": number, "selectedPhraseId": number, "sessionId": string }`. Records a vote and returns `204 No Content` on success. Responds with status `400`, `404`, or `409` when validation fails or the session already voted.
 
 ## Tests
 
